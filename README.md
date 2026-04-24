@@ -38,18 +38,33 @@ This application allows users to book vehicle services, track service status, an
 
 ```
 vehicle-service-management/
-│── app.py
-│── templates/
-│   ├── index.html
-│   ├── admin_dashboard.html
-│   ├── user_dashboard.html
-│── static/
-│   ├── style.css
-│── database/
-│   ├── schema.sql
-```
+│
+├── app.py                  # Main Flask application
+├── schema.sql              # Database schema (MySQL)
+├── .gitignore              # Git ignore rules
+├── LICENSE                 # License file
+├── README.md               # Project documentation
+│
+├── templates/              # HTML templates (Flask uses this folder)
+│   ├── base.html
+│   ├── dashboard.html
+│   ├── customers.html
+│   ├── vehicles.html
+│   ├── services.html
+│   ├── mechanics.html
+│   ├── orders.html
+│   ├── order_detail.html
+│   ├── payments.html
+│
+├── static/                 # Static files (CSS, JS)
+│   ├── css/
+│   │   └── style.css
+│   ├── js/
+│   │   └── script.js
+│
+└── requirements.txt        # Python dependencies (Flask, MySQL, etc.)
 
----
+```
 
 ## ⚙️ Installation & Setup
 
