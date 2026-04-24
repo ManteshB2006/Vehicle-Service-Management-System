@@ -108,13 +108,7 @@ http://127.0.0.1:5000/
 * 📈 Analytics dashboard with charts
 * 🔍 Search & filter functionality
 * 🌐 REST API integration
-
----
-
-## 📸 Screenshots
-
-*Add screenshots of your project here (dashboard, login, booking page)*
-
+  
 ---
 
 ## 🤝 Contributing
