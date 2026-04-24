@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% block title %}Order #{{ order.order_id }}{% endblock %}
+{% block page_title %}Order #{{ order.order_id }}{% endblock %}
+
+{% block header_actions %}
+  <a href="{{ url_for('orders') }}" class="btn-ghost">← Back to Orders</a>
+{% endblock %}
+
+{% block content %}
+{% if order %}
+<div class="detail-grid">
+
+  <!-- Left column -->
+  <div class="detail-col">
+
+    <!-- Status card -->
+    <div class="detail-card status-card-big">
+      <div class="status-row">
+        <span class="big-badge badge-{{ order.status }}">
+          {{ order.status.replace('_',' ').title() }}
+        </span>
+        <span class="mono muted">Created: {{ order.created_at.strftime('%d %b %Y, %H:%M') if order.created_at else '—' }}</span>
+      </div>
+      {% if order.completed_at %}
+      <div class="mono muted small">Completed: {{ order.completed_at.strftime('%d %b %Y, %H:%M') }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Customer + Vehicle -->
+    <div class="detail-card">
+      <div class="dc-title">Customer</div>
+      <div class="dc-value big">{{ order.customer_name }}</div>
+      <div class="dc-row">
+        <span class="dc-label">Phone</span>
+        <span class="mono">{{ order.customer_phone }}</span>
+      </div>
+      <div class="dc-row">
+        <span class="dc-label">Email</span>
+        <span class="muted">{{ order.customer_email or '—' }}</span>
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <div class="dc-title">Vehicle</div>
+      <div class="dc-value big">{{ order.year }} {{ order.make }} {{ order.model }}</div>
+      <div class="dc-row">
+        <span class="dc-label">Plate</span>
+        <span class="plate">{{ order.license_plate }}</span>
+      </div>
+      <div class="dc-row">
+        <span class="dc-label">Color</span>
+        <span>{{ order.color or '—' }}</span>
+      </div>
+    </div>
+
+    <!-- Mechanic -->
+    <div class="detail-card">
+      <div class="dc-title">Assigned Mechanic</div>
+      <div class="dc-value big">{{ order.mechanic_name or 'Unassigned' }}</div>
+      {% if order.mechanic_phone %}
+      <div class="dc-row">
+        <span class="dc-label">Phone</span>
+        <span class="mono">{{ order.mechanic_phone }}</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Notes -->
+    {% if order.notes %}
+    <div class="detail-card">
+      <div class="dc-title">Notes / Complaint</div>
+      <div class="notes-box">{{ order.notes }}</div>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- Right column -->
+  <div class="detail-col">
+
+    <!-- Services performed -->
+    <div class="detail-card">
+      <div class="dc-title">Services Ordered</div>
+      {% if order_services %}
+      <div class="svc-list">
+        {% for s in order_services %}
+        <div class="svc-item">
+          <div>
+            <div class="svc-name">{{ s.name }}</div>
+            <div class="svc-desc muted small">{{ s.description or '' }}</div>
+          </div>
+          <div class="svc-price mono">₹{{ "{:,.0f}".format(s.price) }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="svc-total">
+        <span>Total</span>
+        <span class="mono accent-text">₹{{ "{:,.0f}".format(order.total_amount or 0) }}</span>
+      </div>
+      {% else %}
+      <div class="muted">No services recorded.</div>
+      {% endif %}
+    </div>
+
+    <!-- Payments -->
+    <div class="detail-card">
+      <div class="dc-title">Payments</div>
+      {% if payments %}
+      <div class="pay-list">
+        {% for p in payments %}
+        <div class="pay-item">
+          <div>
+            <span class="badge badge-{{ p.status }}">{{ p.status.title() }}</span>
+            <span class="muted small">{{ p.payment_method.replace('_',' ').title() }}</span>
+          </div>
+          <div>
+            <span class="mono">₹{{ "{:,.0f}".format(p.amount) }}</span>
+            <span class="muted small">{{ p.payment_date.strftime('%d %b %Y') if p.payment_date else '' }}</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="muted">No payments recorded.</div>
+      {% endif %}
+
+      {% if order.status == 'completed' %}
+      <button class="btn-primary mt-1" onclick="openModal('add-payment-modal')">+ Record Payment</button>
+      {% endif %}
+    </div>
+
+    <!-- Update Order -->
+    <div class="detail-card">
+      <div class="dc-title">Update Order</div>
+      <form method="post" action="{{ url_for('update_order', oid=order.order_id) }}">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Status</label>
+            <select name="status">
+              <option value="pending"     {% if order.status=='pending' %}selected{% endif %}>Pending</option>
+              <option value="in_progress" {% if order.status=='in_progress' %}selected{% endif %}>In Progress</option>
+              <option value="completed"   {% if order.status=='completed' %}selected{% endif %}>Completed</option>
+              <option value="cancelled"   {% if order.status=='cancelled' %}selected{% endif %}>Cancelled</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Mechanic</label>
+            <select name="mechanic_id">
+              <option value="">— Unassigned —</option>
+              {% for m in mechanics %}
+              <option value="{{ m.mechanic_id }}"
+                {% if order.mechanic_id == m.mechanic_id %}selected{% endif %}>
+                {{ m.name }} ({{ m.status }})
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group span-2">
+            <label>Notes</label>
+            <textarea name="notes" rows="2">{{ order.notes or '' }}</textarea>
+          </div>
+        </div>
+        <div class="modal-footer" style="padding:0; margin-top:1rem;">
+          <button type="submit" class="btn-primary">Update Order</button>
+        </div>
+      </form>
+    </div>
+
+  </div><!-- /right col -->
+</div><!-- /detail-grid -->
+
+<!-- Add Payment Modal -->
+<div id="add-payment-modal" class="modal">
+  <div class="modal-header">
+    <h2 class="modal-title">Record Payment</h2>
+    <button class="modal-close" onclick="closeModal()">✕</button>
+  </div>
+  <form method="post" action="{{ url_for('add_payment') }}">
+    <input type="hidden" name="order_id" value="{{ order.order_id }}">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Amount (₹) *</label>
+        <input type="number" name="amount" required step="0.01"
+               value="{{ order.total_amount }}" min="1">
+      </div>
+      <div class="form-group">
+        <label>Payment Method</label>
+        <select name="payment_method">
+          <option value="cash">Cash</option>
+          <option value="card">Card</option>
+          <option value="upi">UPI</option>
+          <option value="bank_transfer">Bank Transfer</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-ghost" onclick="closeModal()">Cancel</button>
+      <button type="submit" class="btn-primary">Record Payment</button>
+    </div>
+  </form>
+</div>
+
+{% else %}
+<div class="empty-state">Order not found. <a href="{{ url_for('orders') }}">← Back</a></div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}Orders{% endblock %}
+{% block page_title %}Service Orders{% endblock %}
+
+{% block header_actions %}
+  <button class="btn-primary" onclick="openModal('add-order-modal')">+ New Order</button>
+{% endblock %}
+
+{% block content %}
+<!-- Filter Tabs -->
+<div class="filter-tabs">
+  <button class="tab active" data-filter="all">All</button>
+  <button class="tab" data-filter="pending">Pending</button>
+  <button class="tab" data-filter="in_progress">In Progress</button>
+  <button class="tab" data-filter="completed">Completed</button>
+  <button class="tab" data-filter="cancelled">Cancelled</button>
+</div>
+
+<div class="section-block">
+  <div class="table-wrap">
+    <table class="data-table" id="orders-table">
+      <thead>
+        <tr>
+          <th>#</th><th>Customer</th><th>Vehicle</th><th>Mechanic</th>
+          <th>Status</th><th>Amount</th><th>Date</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for o in orders %}
+        <tr data-status="{{ o.status }}">
+          <td class="mono">{{ o.order_id }}</td>
+          <td><strong>{{ o.customer_name }}</strong></td>
+          <td>{{ o.vehicle_info }}</td>
+          <td class="muted">{{ o.mechanic_name or '—' }}</td>
+          <td><span class="badge badge-{{ o.status }}">{{ o.status.replace('_',' ').title() }}</span></td>
+          <td class="mono">₹{{ "{:,.0f}".format(o.total_amount or 0) }}</td>
+          <td class="mono muted">{{ o.created_at.strftime('%d %b %Y') if o.created_at else '—' }}</td>
+          <td class="action-cell">
+            <a href="{{ url_for('order_detail', oid=o.order_id) }}" class="btn-xs">View</a>
+            <form method="post" action="{{ url_for('delete_order', oid=o.order_id) }}" style="display:inline"
+                  onsubmit="return confirm('Delete Order #{{ o.order_id }}?')">
+              <button class="btn-xs btn-danger">Del</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="empty-row">No orders found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add Order Modal -->
+<div id="add-order-modal" class="modal modal-wide">
+  <div class="modal-header">
+    <h2 class="modal-title">New Service Order</h2>
+    <button class="modal-close" onclick="closeModal()">✕</button>
+  </div>
+  <form method="post" action="{{ url_for('add_order') }}">
+    <div class="form-grid">
+      <!-- Customer -->
+      <div class="form-group">
+        <label>Customer *</label>
+        <select name="customer_id" id="order-customer" required onchange="loadVehicles(this.value)">
+          <option value="">— Select Customer —</option>
+          {% for c in customers %}
+          <option value="{{ c.customer_id }}">{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <!-- Vehicle -->
+      <div class="form-group">
+        <label>Vehicle *</label>
+        <select name="vehicle_id" id="order-vehicle" required>
+          <option value="">— Select Customer First —</option>
+          {% for v in vehicles %}
+          <option value="{{ v.vehicle_id }}" data-customer="{{ v.customer_id }}" style="display:none">
+            {{ v.make }} {{ v.model }} ({{ v.license_plate }})
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <!-- Mechanic -->
+      <div class="form-group">
+        <label>Assign Mechanic</label>
+        <select name="mechanic_id">
+          <option value="">— Unassigned —</option>
+          {% for m in mechanics %}
+          <option value="{{ m.mechanic_id }}">{{ m.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <!-- Services -->
+      <div class="form-group span-2">
+        <label>Services (select one or more) *</label>
+        <div class="checkbox-list">
+          {% for s in services %}
+          <label class="checkbox-item">
+            <input type="checkbox" name="service_ids" value="{{ s.service_id }}"
+                   data-price="{{ s.price }}" onchange="calcTotal()">
+            <span class="cb-name">{{ s.name }}</span>
+            <span class="cb-price">₹{{ "{:,.0f}".format(s.price) }}</span>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+      <!-- Total Preview -->
+      <div class="form-group">
+        <label>Estimated Total</label>
+        <div class="total-preview" id="order-total">₹0</div>
+      </div>
+      <!-- Notes -->
+      <div class="form-group span-2">
+        <label>Notes / Customer Complaint</label>
+        <textarea name="notes" rows="2" placeholder="Describe the issue or special instructions"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-ghost" onclick="closeModal()">Cancel</button>
+      <button type="submit" class="btn-primary">Create Order</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Filter tabs
+document.querySelectorAll('.tab').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+    const filter = this.dataset.filter;
+    document.querySelectorAll('#orders-table tbody tr[data-status]').forEach(row => {
+      row.style.display = (filter === 'all' || row.dataset.status === filter) ? '' : 'none';
+    });
+  });
+});
+
+// Load vehicles for selected customer
+function loadVehicles(customerId) {
+  const sel = document.getElementById('order-vehicle');
+  sel.innerHTML = '<option value="">— Loading... —</option>';
+  if (!customerId) { sel.innerHTML = '<option value="">— Select Customer First —</option>'; return; }
+  fetch('/api/vehicles/' + customerId)
+    .then(r => r.json())
+    .then(data => {
+      sel.innerHTML = '<option value="">— Select Vehicle —</option>';
+      data.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v.vehicle_id;
+        opt.text  = v.make + ' ' + v.model + ' (' + v.license_plate + ')';
+        sel.appendChild(opt);
+      });
+    });
+}
+
+// Calculate total
+function calcTotal() {
+  let total = 0;
+  document.querySelectorAll('input[name="service_ids"]:checked').forEach(cb => {
+    total += parseFloat(cb.dataset.price) || 0;
+  });
+  document.getElementById('order-total').textContent =
+    '₹' + total.toLocaleString('en-IN', {maximumFractionDigits: 0});
+}
+</script>
+{% endblock %}

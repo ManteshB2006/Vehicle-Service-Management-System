@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Customers{% endblock %}
+{% block page_title %}Customers{% endblock %}
+
+{% block header_actions %}
+  <button class="btn-primary" onclick="openModal('add-customer-modal')">+ Add Customer</button>
+{% endblock %}
+
+{% block content %}
+<div class="section-block">
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>#</th><th>Name</th><th>Phone</th><th>Email</th>
+          <th>Address</th><th>Vehicles</th><th>Since</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in customers %}
+        <tr>
+          <td class="mono">{{ c.customer_id }}</td>
+          <td><strong>{{ c.name }}</strong></td>
+          <td class="mono">{{ c.phone }}</td>
+          <td class="muted">{{ c.email or '—' }}</td>
+          <td class="muted">{{ c.address or '—' }}</td>
+          <td><span class="badge badge-neutral">{{ c.vehicle_count }}</span></td>
+          <td class="mono muted">{{ c.created_at.strftime('%d %b %Y') if c.created_at else '—' }}</td>
+          <td class="action-cell">
+            <button class="btn-xs" onclick="openEdit({{ c.customer_id }}, '{{ c.name|e }}', '{{ c.phone|e }}', '{{ c.email|e }}', '{{ c.address|replace('\n',' ')|e }}')">Edit</button>
+            <form method="post" action="{{ url_for('delete_customer', cid=c.customer_id) }}" style="display:inline" onsubmit="return confirm('Delete {{ c.name }}? This will also delete their vehicles and orders.')">
+              <button class="btn-xs btn-danger">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="empty-row">No customers found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add Customer Modal -->
+<div id="add-customer-modal" class="modal">
+  <div class="modal-header">
+    <h2 class="modal-title">Add Customer</h2>
+    <button class="modal-close" onclick="closeModal()">✕</button>
+  </div>
+  <form method="post" action="{{ url_for('add_customer') }}">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Full Name *</label>
+        <input type="text" name="name" required placeholder="e.g. Rahul Sharma">
+      </div>
+      <div class="form-group">
+        <label>Phone *</label>
+        <input type="tel" name="phone" required placeholder="10-digit mobile">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" name="email" placeholder="email@example.com">
+      </div>
+      <div class="form-group span-2">
+        <label>Address</label>
+        <textarea name="address" rows="2" placeholder="Street, City, State"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-ghost" onclick="closeModal()">Cancel</button>
+      <button type="submit" class="btn-primary">Add Customer</button>
+    </div>
+  </form>
+</div>
+
+<!-- Edit Customer Modal -->
+<div id="edit-customer-modal" class="modal">
+  <div class="modal-header">
+    <h2 class="modal-title">Edit Customer</h2>
+    <button class="modal-close" onclick="closeModal()">✕</button>
+  </div>
+  <form method="post" id="edit-customer-form">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Full Name *</label>
+        <input type="text" name="name" id="ec-name" required>
+      </div>
+      <div class="form-group">
+        <label>Phone *</label>
+        <input type="tel" name="phone" id="ec-phone" required>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" name="email" id="ec-email">
+      </div>
+      <div class="form-group span-2">
+        <label>Address</label>
+        <textarea name="address" id="ec-address" rows="2"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-ghost" onclick="closeModal()">Cancel</button>
+      <button type="submit" class="btn-primary">Save Changes</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openEdit(id, name, phone, email, address) {
+  document.getElementById('ec-name').value    = name;
+  document.getElementById('ec-phone').value   = phone;
+  document.getElementById('ec-email').value   = email;
+  document.getElementById('ec-address').value = address;
+  document.getElementById('edit-customer-form').action = '/customers/edit/' + id;
+  openModal('edit-customer-modal');
+}
+</script>
+{% endblock %}

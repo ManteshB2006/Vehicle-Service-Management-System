@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Services{% endblock %}
+{% block page_title %}Service Catalog{% endblock %}
+
+{% block header_actions %}
+  <button class="btn-primary" onclick="openModal('add-service-modal')">+ Add Service</button>
+{% endblock %}
+
+{% block content %}
+<div class="service-cards">
+  {% for s in services %}
+  <div class="service-card">
+    <div class="sc-header">
+      <span class="sc-name">{{ s.name }}</span>
+      <span class="sc-price">₹{{ "{:,.0f}".format(s.price) }}</span>
+    </div>
+    <p class="sc-desc">{{ s.description or 'No description.' }}</p>
+    <div class="sc-footer">
+      <span class="sc-meta">⏱ {{ s.duration_hours }}h</span>
+      <span class="sc-meta">Used {{ s.times_used }}×</span>
+      <div class="sc-actions">
+        <button class="btn-xs"
+          onclick="openEditSvc({{ s.service_id }},'{{ s.name|e }}','{{ s.description|replace('\n',' ')|e }}',{{ s.price }},{{ s.duration_hours }})">
+          Edit
+        </button>
+        <form method="post" action="{{ url_for('delete_service', sid=s.service_id) }}" style="display:inline"
+              onsubmit="return confirm('Delete service: {{ s.name }}?')">
+          <button class="btn-xs btn-danger">Delete</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="empty-state">No services in catalog. Add one above.</div>
+  {% endfor %}
+</div>
+
+<!-- Add Service Modal -->
+<div id="add-service-modal" class="modal">
+  <div class="modal-header">
+    <h2 class="modal-title">Add Service</h2>
+    <button class="modal-close" onclick="closeModal()">✕</button>
+  </div>
+  <form method="post" action="{{ url_for('add_service') }}">
+    <div class="form-grid">
+      <div class="form-group span-2">
+        <label>Service Name *</label>
+        <input type="text" name="name" required placeholder="e.g. Oil Change">
+      </div>
+      <div class="form-group span-2">
+        <label>Description</label>
+        <textarea name="description" rows="2" placeholder="Brief description of what's included"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Price (₹) *</label>
+        <input type="number" name="price" required min="0" step="0.01" placeholder="999.00">
+      </div>
+      <div class="form-group">
+        <label>Duration (hours) *</label>
+        <input type="number" name="duration_hours" required min="0.5" step="0.5" value="1.0">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-ghost" onclick="closeModal()">Cancel</button>
+      <button type="submit" class="btn-primary">Add Service</button>
+    </div>
+  </form>
+</div>
+
+<!-- Edit Service Modal -->
+<div id="edit-service-modal" class="modal">
+  <div class="modal-header">
+    <h2 class="modal-title">Edit Service</h2>
+    <button class="modal-close" onclick="closeModal()">✕</button>
+  </div>
+  <form method="post" id="edit-service-form">
+    <div class="form-grid">
+      <div class="form-group span-2">
+        <label>Service Name *</label>
+        <input type="text" name="name" id="es-name" required>
+      </div>
+      <div class="form-group span-2">
+        <label>Description</label>
+        <textarea name="description" id="es-desc" rows="2"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Price (₹) *</label>
+        <input type="number" name="price" id="es-price" required min="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>Duration (hours) *</label>
+        <input type="number" name="duration_hours" id="es-dur" required min="0.5" step="0.5">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-ghost" onclick="closeModal()">Cancel</button>
+      <button type="submit" class="btn-primary">Save Changes</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openEditSvc(id, name, desc, price, dur) {
+  document.getElementById('es-name').value  = name;
+  document.getElementById('es-desc').value  = desc;
+  document.getElementById('es-price').value = price;
+  document.getElementById('es-dur').value   = dur;
+  document.getElementById('edit-service-form').action = '/services/edit/' + id;
+  openModal('edit-service-modal');
+}
+</script>
+{% endblock %}

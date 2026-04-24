@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- ── Stat Cards ──────────────────────────────────────── -->
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="stat-label">Customers</div>
+    <div class="stat-value">{{ stats.get('total_customers', 0) }}</div>
+    <div class="stat-sub">registered</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Vehicles</div>
+    <div class="stat-value">{{ stats.get('total_vehicles', 0) }}</div>
+    <div class="stat-sub">on file</div>
+  </div>
+  <div class="stat-card accent">
+    <div class="stat-label">Pending</div>
+    <div class="stat-value">{{ stats.get('pending_orders', 0) }}</div>
+    <div class="stat-sub">awaiting work</div>
+  </div>
+  <div class="stat-card yellow">
+    <div class="stat-label">In Progress</div>
+    <div class="stat-value">{{ stats.get('active_orders', 0) }}</div>
+    <div class="stat-sub">being serviced</div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-label">Completed</div>
+    <div class="stat-value">{{ stats.get('completed_orders', 0) }}</div>
+    <div class="stat-sub">all time</div>
+  </div>
+  <div class="stat-card revenue">
+    <div class="stat-label">Revenue</div>
+    <div class="stat-value">₹{{ "{:,.0f}".format(stats.get('total_revenue', 0)) }}</div>
+    <div class="stat-sub">total collected</div>
+  </div>
+</div>
+
+<!-- ── Order Status Bar ───────────────────────────────── -->
+{% set total_orders = (stats.get('pending_orders',0) + stats.get('active_orders',0) + stats.get('completed_orders',0)) %}
+{% if total_orders > 0 %}
+<div class="section-block">
+  <div class="section-label">Order Distribution</div>
+  <div class="progress-bar-group">
+    <div class="progress-track">
+      <div class="progress-seg seg-pending"
+           style="width:{{ (stats.get('pending_orders',0)/total_orders*100)|round(1) }}%"
+           title="Pending"></div>
+      <div class="progress-seg seg-active"
+           style="width:{{ (stats.get('active_orders',0)/total_orders*100)|round(1) }}%"
+           title="In Progress"></div>
+      <div class="progress-seg seg-done"
+           style="width:{{ (stats.get('completed_orders',0)/total_orders*100)|round(1) }}%"
+           title="Completed"></div>
+    </div>
+    <div class="progress-legend">
+      <span class="leg-item"><span class="leg-dot pending"></span>Pending ({{ stats.get('pending_orders',0) }})</span>
+      <span class="leg-item"><span class="leg-dot active"></span>In Progress ({{ stats.get('active_orders',0) }})</span>
+      <span class="leg-item"><span class="leg-dot done"></span>Completed ({{ stats.get('completed_orders',0) }})</span>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ── Recent Orders Table ────────────────────────────── -->
+<div class="section-block">
+  <div class="section-header">
+    <span class="section-label">Recent Orders</span>
+    <a href="{{ url_for('orders') }}" class="btn-ghost">View All →</a>
+  </div>
+  {% if recent_orders %}
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Customer</th>
+          <th>Vehicle</th>
+          <th>Status</th>
+          <th>Amount</th>
+          <th>Date</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for o in recent_orders %}
+        <tr>
+          <td class="mono">{{ o.order_id }}</td>
+          <td>{{ o.customer_name }}</td>
+          <td>
+            {{ o.vehicle }}
+            <span class="plate">{{ o.license_plate }}</span>
+          </td>
+          <td><span class="badge badge-{{ o.status }}">{{ o.status.replace('_',' ').title() }}</span></td>
+          <td class="mono">₹{{ "{:,.0f}".format(o.total_amount or 0) }}</td>
+          <td class="mono muted">{{ o.created_at.strftime('%d %b %Y') if o.created_at else '—' }}</td>
+          <td>
+            <a href="{{ url_for('order_detail', oid=o.order_id) }}" class="btn-xs">View</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">No orders yet. <a href="{{ url_for('orders') }}">Create one →</a></div>
+  {% endif %}
+</div>
+
+<!-- ── Quick Actions ──────────────────────────────────── -->
+<div class="quick-actions">
+  <div class="qa-title">Quick Actions</div>
+  <div class="qa-grid">
+    <a href="{{ url_for('customers') }}" class="qa-card" onclick="openModal('add-customer-modal'); return false;">
+      <span class="qa-icon">+</span>
+      <span>Add Customer</span>
+    </a>
+    <a href="{{ url_for('vehicles') }}" class="qa-card">
+      <span class="qa-icon">+</span>
+      <span>Register Vehicle</span>
+    </a>
+    <a href="{{ url_for('orders') }}" class="qa-card">
+      <span class="qa-icon">+</span>
+      <span>New Order</span>
+    </a>
+    <a href="{{ url_for('payments') }}" class="qa-card">
+      <span class="qa-icon">+</span>
+      <span>Record Payment</span>
+    </a>
+  </div>
+</div>
+{% endblock %}

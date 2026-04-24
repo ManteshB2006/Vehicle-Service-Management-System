@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Vehicles{% endblock %}
+{% block page_title %}Vehicles{% endblock %}
+
+{% block header_actions %}
+  <button class="btn-primary" onclick="openModal('add-vehicle-modal')">+ Register Vehicle</button>
+{% endblock %}
+
+{% block content %}
+<div class="section-block">
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>#</th><th>Owner</th><th>Make & Model</th>
+          <th>Year</th><th>Plate</th><th>Color</th>
+          <th>VIN</th><th>Services</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in vehicles %}
+        <tr>
+          <td class="mono">{{ v.vehicle_id }}</td>
+          <td>
+            <strong>{{ v.owner_name }}</strong><br>
+            <span class="muted mono">{{ v.owner_phone }}</span>
+          </td>
+          <td><strong>{{ v.make }} {{ v.model }}</strong></td>
+          <td class="mono">{{ v.year }}</td>
+          <td><span class="plate">{{ v.license_plate }}</span></td>
+          <td>
+            <span class="color-dot" style="background:{{ v.color|lower if v.color else '#555' }}"></span>
+            {{ v.color or '—' }}
+          </td>
+          <td class="mono muted small">{{ v.vin or '—' }}</td>
+          <td><span class="badge badge-neutral">{{ v.service_count }}</span></td>
+          <td class="action-cell">
+            <form method="post" action="{{ url_for('delete_vehicle', vid=v.vehicle_id) }}" style="display:inline"
+                  onsubmit="return confirm('Remove {{ v.make }} {{ v.model }} ({{ v.license_plate }})?')">
+              <button class="btn-xs btn-danger">Remove</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="9" class="empty-row">No vehicles registered.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add Vehicle Modal -->
+<div id="add-vehicle-modal" class="modal">
+  <div class="modal-header">
+    <h2 class="modal-title">Register Vehicle</h2>
+    <button class="modal-close" onclick="closeModal()">✕</button>
+  </div>
+  <form method="post" action="{{ url_for('add_vehicle') }}">
+    <div class="form-grid">
+      <div class="form-group span-2">
+        <label>Owner / Customer *</label>
+        <select name="customer_id" required>
+          <option value="">— Select Customer —</option>
+          {% for c in customers %}
+          <option value="{{ c.customer_id }}">{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Make *</label>
+        <input type="text" name="make" required placeholder="e.g. Maruti, Honda, Hyundai">
+      </div>
+      <div class="form-group">
+        <label>Model *</label>
+        <input type="text" name="model" required placeholder="e.g. Swift, City, Creta">
+      </div>
+      <div class="form-group">
+        <label>Year *</label>
+        <input type="number" name="year" required min="1990" max="2025" placeholder="2023">
+      </div>
+      <div class="form-group">
+        <label>License Plate *</label>
+        <input type="text" name="license_plate" required placeholder="KA-01-AB-1234">
+      </div>
+      <div class="form-group">
+        <label>Color</label>
+        <input type="text" name="color" placeholder="e.g. White, Red, Silver">
+      </div>
+      <div class="form-group">
+        <label>VIN (optional)</label>
+        <input type="text" name="vin" placeholder="17-char VIN number">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-ghost" onclick="closeModal()">Cancel</button>
+      <button type="submit" class="btn-primary">Register Vehicle</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

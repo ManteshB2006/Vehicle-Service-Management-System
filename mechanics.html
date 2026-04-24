@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Mechanics{% endblock %}
+{% block page_title %}Mechanics{% endblock %}
+
+{% block header_actions %}
+  <button class="btn-primary" onclick="openModal('add-mech-modal')">+ Add Mechanic</button>
+{% endblock %}
+
+{% block content %}
+<div class="mechanic-grid">
+  {% for m in mechanics %}
+  <div class="mech-card">
+    <div class="mech-avatar">{{ m.name[0] }}</div>
+    <div class="mech-info">
+      <div class="mech-name">{{ m.name }}</div>
+      <div class="mech-spec">{{ m.specialization or 'General' }}</div>
+      <div class="mech-phone mono">{{ m.phone or '—' }}</div>
+    </div>
+    <div class="mech-stats">
+      <div class="mstat">
+        <span class="mstat-val">{{ m.active_jobs }}</span>
+        <span class="mstat-lbl">Active</span>
+      </div>
+      <div class="mstat">
+        <span class="mstat-val">{{ m.total_jobs }}</span>
+        <span class="mstat-lbl">Total</span>
+      </div>
+    </div>
+    <span class="mech-status status-{{ m.status }}">{{ m.status.title() }}</span>
+    <div class="mech-actions">
+      <button class="btn-xs"
+        onclick="openEditMech({{ m.mechanic_id }},'{{ m.name|e }}','{{ m.phone|e }}','{{ m.specialization|e }}','{{ m.status }}')">
+        Edit
+      </button>
+      <form method="post" action="{{ url_for('delete_mechanic', mid=m.mechanic_id) }}" style="display:inline"
+            onsubmit="return confirm('Remove {{ m.name }}?')">
+        <button class="btn-xs btn-danger">Remove</button>
+      </form>
+    </div>
+  </div>
+  {% else %}
+  <div class="empty-state">No mechanics on staff.</div>
+  {% endfor %}
+</div>
+
+<!-- Add Mechanic Modal -->
+<div id="add-mech-modal" class="modal">
+  <div class="modal-header">
+    <h2 class="modal-title">Add Mechanic</h2>
+    <button class="modal-close" onclick="closeModal()">✕</button>
+  </div>
+  <form method="post" action="{{ url_for('add_mechanic') }}">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Full Name *</label>
+        <input type="text" name="name" required placeholder="Mechanic's name">
+      </div>
+      <div class="form-group">
+        <label>Phone</label>
+        <input type="tel" name="phone" placeholder="Contact number">
+      </div>
+      <div class="form-group">
+        <label>Specialization</label>
+        <input type="text" name="specialization" placeholder="e.g. Engine & Transmission">
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select name="status">
+          <option value="available">Available</option>
+          <option value="busy">Busy</option>
+          <option value="off">Off Duty</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-ghost" onclick="closeModal()">Cancel</button>
+      <button type="submit" class="btn-primary">Add Mechanic</button>
+    </div>
+  </form>
+</div>
+
+<!-- Edit Mechanic Modal -->
+<div id="edit-mech-modal" class="modal">
+  <div class="modal-header">
+    <h2 class="modal-title">Edit Mechanic</h2>
+    <button class="modal-close" onclick="closeModal()">✕</button>
+  </div>
+  <form method="post" id="edit-mech-form">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Full Name *</label>
+        <input type="text" name="name" id="em-name" required>
+      </div>
+      <div class="form-group">
+        <label>Phone</label>
+        <input type="tel" name="phone" id="em-phone">
+      </div>
+      <div class="form-group">
+        <label>Specialization</label>
+        <input type="text" name="specialization" id="em-spec">
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select name="status" id="em-status">
+          <option value="available">Available</option>
+          <option value="busy">Busy</option>
+          <option value="off">Off Duty</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-ghost" onclick="closeModal()">Cancel</button>
+      <button type="submit" class="btn-primary">Save Changes</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openEditMech(id, name, phone, spec, status) {
+  document.getElementById('em-name').value   = name;
+  document.getElementById('em-phone').value  = phone;
+  document.getElementById('em-spec').value   = spec;
+  document.getElementById('em-status').value = status;
+  document.getElementById('edit-mech-form').action = '/mechanics/edit/' + id;
+  openModal('edit-mech-modal');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}VSMS{% endblock %} — Vehicle Service</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<!-- ── Sidebar ───────────────────────────────────────────── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <span class="logo-icon">⚙</span>
+    <div class="logo-text">
+      <span class="logo-main">VSMS</span>
+      <span class="logo-sub">Service Management</span>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a href="{{ url_for('dashboard') }}"
+       class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
+      <span class="nav-icon">▣</span> Dashboard
+    </a>
+    <a href="{{ url_for('customers') }}"
+       class="nav-item {% if request.endpoint in ['customers','add_customer','edit_customer'] %}active{% endif %}">
+      <span class="nav-icon">◈</span> Customers
+    </a>
+    <a href="{{ url_for('vehicles') }}"
+       class="nav-item {% if request.endpoint in ['vehicles','add_vehicle'] %}active{% endif %}">
+      <span class="nav-icon">◉</span> Vehicles
+    </a>
+    <a href="{{ url_for('orders') }}"
+       class="nav-item {% if request.endpoint in ['orders','order_detail','add_order'] %}active{% endif %}">
+      <span class="nav-icon">◫</span> Service Orders
+    </a>
+    <a href="{{ url_for('services') }}"
+       class="nav-item {% if request.endpoint in ['services','add_service'] %}active{% endif %}">
+      <span class="nav-icon">◧</span> Services
+    </a>
+    <a href="{{ url_for('mechanics') }}"
+       class="nav-item {% if request.endpoint in ['mechanics','add_mechanic'] %}active{% endif %}">
+      <span class="nav-icon">◬</span> Mechanics
+    </a>
+    <a href="{{ url_for('payments') }}"
+       class="nav-item {% if request.endpoint in ['payments','add_payment'] %}active{% endif %}">
+      <span class="nav-icon">◎</span> Payments
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <span>DBMS Mini Project</span>
+  </div>
+</aside>
+
+<!-- ── Main ──────────────────────────────────────────────── -->
+<main class="main-content">
+  <header class="page-header">
+    <h1 class="page-title">{% block page_title %}{% endblock %}</h1>
+    <div class="header-actions">{% block header_actions %}{% endblock %}</div>
+  </header>
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-container">
+        {% for category, msg in messages %}
+          <div class="flash flash-{{ category }}">
+            <span>{{ '✓' if category == 'success' else '✕' }}</span> {{ msg }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  {% block content %}{% endblock %}
+</main>
+
+<!-- ── Modal Overlay ─────────────────────────────────────── -->
+<div id="modal-overlay" class="modal-overlay" onclick="closeModal()"></div>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Payments{% endblock %}
+{% block page_title %}Payments{% endblock %}
+
+{% block content %}
+
+<!-- Pending Payments -->
+{% if pending_payments %}
+<div class="section-block">
+  <div class="section-header">
+    <span class="section-label">⚠ Unpaid Completed Orders</span>
+  </div>
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr><th>Order #</th><th>Customer</th><th>Vehicle</th><th>Total</th><th>Paid</th><th>Due</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for p in pending_payments %}
+        <tr>
+          <td class="mono">{{ p.order_id }}</td>
+          <td>{{ p.customer_name }}</td>
+          <td>{{ p.vehicle_info }}</td>
+          <td class="mono">₹{{ "{:,.0f}".format(p.total_amount or 0) }}</td>
+          <td class="mono">₹{{ "{:,.0f}".format(p.paid_amount or 0) }}</td>
+          <td class="mono accent-text"><strong>₹{{ "{:,.0f}".format((p.total_amount or 0) - (p.paid_amount or 0)) }}</strong></td>
+          <td>
+            <button class="btn-xs btn-primary"
+              onclick="openPayModal({{ p.order_id }}, {{ (p.total_amount or 0) - (p.paid_amount or 0) }})">
+              Pay Now
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- Payment History -->
+<div class="section-block">
+  <div class="section-label">Payment History</div>
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr><th>#</th><th>Order</th><th>Customer</th><th>Vehicle</th><th>Amount</th><th>Method</th><th>Status</th><th>Date</th></tr>
+      </thead>
+      <tbody>
+        {% for p in payments %}
+        <tr>
+          <td class="mono">{{ p.payment_id }}</td>
+          <td class="mono"><a href="{{ url_for('order_detail', oid=p.order_id) }}">#{{ p.order_id }}</a></td>
+          <td>{{ p.customer_name }}</td>
+          <td>{{ p.vehicle_info }}</td>
+          <td class="mono"><strong>₹{{ "{:,.0f}".format(p.amount) }}</strong></td>
+          <td>{{ p.payment_method.replace('_',' ').title() }}</td>
+          <td><span class="badge badge-{{ p.status }}">{{ p.status.title() }}</span></td>
+          <td class="mono muted">{{ p.payment_date.strftime('%d %b %Y') if p.payment_date else '—' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="empty-row">No payments recorded yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Payment Modal -->
+<div id="pay-modal" class="modal">
+  <div class="modal-header">
+    <h2 class="modal-title">Record Payment</h2>
+    <button class="modal-close" onclick="closeModal()">✕</button>
+  </div>
+  <form method="post" action="{{ url_for('add_payment') }}">
+    <input type="hidden" name="order_id" id="pay-order-id">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Amount (₹) *</label>
+        <input type="number" name="amount" id="pay-amount" required step="0.01" min="1">
+      </div>
+      <div class="form-group">
+        <label>Payment Method</label>
+        <select name="payment_method">
+          <option value="cash">Cash</option>
+          <option value="card">Card</option>
+          <option value="upi">UPI</option>
+          <option value="bank_transfer">Bank Transfer</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-ghost" onclick="closeModal()">Cancel</button>
+      <button type="submit" class="btn-primary">Record Payment</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openPayModal(orderId, due) {
+  document.getElementById('pay-order-id').value = orderId;
+  document.getElementById('pay-amount').value   = due.toFixed(2);
+  openModal('pay-modal');
+}
+</script>
+{% endblock %}
