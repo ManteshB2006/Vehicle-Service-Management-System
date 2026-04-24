@@ -56,7 +56,7 @@ vehicle-service-management/
 ### 1️⃣ Clone the repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/Vehicle-Service-Management-System.git
+git clone https://github.com/ManteshB2006/Vehicle-Service-Management-System.git
 cd Vehicle-Service-Management-System
 ```
 
